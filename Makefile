@@ -93,3 +93,4 @@ size:
 	$(AVRSIZE) $(AVRSIZEARGS) $(ELF)
 
 .PHONY: clean install format size
+
