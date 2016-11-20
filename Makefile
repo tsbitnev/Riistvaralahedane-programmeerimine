@@ -43,13 +43,19 @@ CFLAGS =	-Wall \
 			-Werror \
 			-Wfatal-errors \
 			-Os \
+			-flto \
+			-fdata-sections \
+			-ffunction-sections \
 			-mmcu=$(BOARD) \
 			-DF_CPU=16000000UL \
 			-DGIT_DESCR=\"$(shell git describe --abbrev=6 --dirty --always --tags --long)\" \
+			-ffreestanding \
 			-std=c11
 
 # Linker flags
-LDFLAGS = -mmcu=$(BOARD)
+LDFLAGS =	-mmcu=$(BOARD) \
+			-flto \
+			-Wl,-gc-sections
 
 OBJCOPYARGS =	-O ihex \
 				-R .eeprom
@@ -84,13 +90,19 @@ clean:
 	rm -fr $(BUILD_LIBS_DIR)/*/*.o
 
 install:
+	@if [ ! -c "$(ARDUINO)" ]; then \
+		echo -e "\n\nEnvironment variable ARDUINO is \"$(ARDUINO)\" and that is invalid."\
+				"\nDid you do \"export ARDUINO=/dev/ttyACM0\" before running make install?"\
+				"\nAlso make sure that ARDUINO env var points to a valid tty device\n\n"; \
+		exit 1;\
+	fi
+	
 	$(AVRDUDE) $(AVRDUDEARGS) -U flash:w:$(TARGET)
 
 format:
-	$(CODE_FORMATTER) $(SRC)
+	$(CODE_FORMATTER) $(SRCDIR)/*.c
 
 size:
 	$(AVRSIZE) $(AVRSIZEARGS) $(ELF)
 
 .PHONY: clean install format size
-
